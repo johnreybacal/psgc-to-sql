@@ -1,0 +1,16 @@
+{
+  "name": "psgc-to-sql",
+  "version": "1.0.0",
+  "description": "Ingest PSGC data into SQL database",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Johnrey Bacal",
+  "license": "ISC",
+  "dependencies": {
+    "mysql2": "^3.10.3",
+    "psgc-reader": "^1.0.7",
+    "sequelize": "^6.37.3"
+  }
+}
