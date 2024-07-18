@@ -7,7 +7,7 @@ export default interface MunicipalityDefinition extends BaseDefinition {
     updatedAt?: string | boolean;
     oldCode?: string;
     population?: string;
-    code: string;
+    code?: string;
     name: string;
 
     incomeClassification?: string;

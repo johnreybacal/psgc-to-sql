@@ -5,6 +5,6 @@ export default interface BaseDefinition {
     updatedAt?: string | boolean;
     oldCode?: string;
     population?: string;
-    code: string;
+    code?: string;
     name: string;
 }
