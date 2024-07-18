@@ -1,7 +1,10 @@
-import PsgcReader, { BasicBuilder } from "psgc-reader";
+import PsgcReader from "psgc-reader";
 import { Sequelize } from "sequelize";
+import ProvinceDefinition from "./definitions/province";
 import RegionDefinition from "./definitions/region";
-import defineRegion from "./models/region";
+import { utils } from "./definitions/util";
+import { defineProvince } from "./models/province";
+import { defineRegion } from "./models/region";
 
 const connect = async () => {
     const sequelize = new Sequelize("psgc-test", "root", "root", {
@@ -26,8 +29,16 @@ const connect = async () => {
         createdAt: "AUDIT_CREATED_AT",
         updatedAt: "AUDIT_UPDATED_AT",
     };
+    const provinceDefinition: ProvinceDefinition = {
+        tableName: "porubinsu",
+        name: "namae",
+        incomeClassification: "ingukamu",
+        population: "popureeshu",
+        oldCode: "orudu_koodu",
+    };
 
     const Region = defineRegion(sequelize, regionDefinition);
+    const Province = defineProvince(sequelize, provinceDefinition);
 
     console.log(Region);
 
@@ -35,16 +46,35 @@ const connect = async () => {
 
     const psgc = PsgcReader.instance;
 
-    psgc.enableLogger();
-
     await psgc.read(filePath);
-    psgc.setBuilder(new BasicBuilder()).filter().associate();
+    psgc.filter().associate();
 
     for (const region of psgc.regions) {
-        const r = await Region.create({
-            [regionDefinition.code]: region.code,
-            [regionDefinition.name]: region.name,
-        });
+        const reg = Region.build();
+
+        utils.setBaseValue<RegionDefinition>(reg, regionDefinition, region);
+
+        await reg.save();
+    }
+
+    console.log(provinceDefinition);
+
+    for (const province of psgc.provinces) {
+        const prov = Province.build();
+
+        utils.setBaseValue<ProvinceDefinition>(
+            prov,
+            provinceDefinition,
+            province
+        );
+        utils.setValueIfDefined<ProvinceDefinition>(
+            prov,
+            provinceDefinition,
+            "incomeClassification",
+            province.incomeClassification
+        );
+
+        await prov.save();
     }
 
     process.exit(0);
