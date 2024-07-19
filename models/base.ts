@@ -9,6 +9,16 @@ export const define = (
     defaultTableName: string,
     columns = {}
 ) => {
+    if (definition.id) {
+        Object.assign(columns, {
+            [definition.id]: {
+                type: DataTypes.INTEGER,
+                primaryKey: true,
+                autoIncrement: true,
+            },
+        });
+    }
+
     Object.assign(columns, {
         [definition.name]: {
             type: DataTypes.STRING,
