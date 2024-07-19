@@ -1,5 +1,5 @@
 import { DataTypes, Sequelize } from "sequelize";
-import ProvinceDefinition from "../definitions/province";
+import { ProvinceDefinition } from "../definitions";
 import { utils } from "../definitions/util";
 import { define } from "./base";
 

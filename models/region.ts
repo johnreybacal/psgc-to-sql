@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize";
-import RegionDefinition from "../definitions/region";
+import { RegionDefinition } from "../definitions";
 import { define } from "./base";
 
 export const defineRegion = (

@@ -1,5 +1,5 @@
 import { DataTypes, Sequelize } from "sequelize";
-import BaseDefinition from "../definitions/base";
+import { BaseDefinition } from "../definitions";
 import { utils } from "../definitions/util";
 
 export const define = (

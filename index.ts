@@ -1,10 +1,8 @@
 import PsgcReader from "psgc-reader";
 import { Sequelize } from "sequelize";
-import ProvinceDefinition from "./definitions/province";
-import RegionDefinition from "./definitions/region";
+import { ProvinceDefinition, RegionDefinition } from "./definitions";
 import { utils } from "./definitions/util";
-import { defineProvince } from "./models/province";
-import { defineRegion } from "./models/region";
+import { defineProvince, defineRegion } from "./models";
 
 const connect = async () => {
     const sequelize = new Sequelize("psgc-test", "root", "root", {
