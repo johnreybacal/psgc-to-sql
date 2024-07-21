@@ -1,8 +1,8 @@
-import PsgcReader from "psgc-reader";
+import psgcReader from "psgc-reader";
 import { Sequelize } from "sequelize";
-import { ProvinceDefinition, RegionDefinition } from "./definitions";
-import { utils } from "./definitions/util";
-import { defineProvince, defineRegion } from "./models";
+import { ProvinceDefinition, RegionDefinition } from "./src/definitions";
+import { utils } from "./src/definitions/util";
+import { defineProvince, defineRegion } from "./src/models";
 
 const connect = async () => {
     const sequelize = new Sequelize("psgc-test", "root", "root", {
@@ -42,10 +42,9 @@ const connect = async () => {
 
     const filePath = "./data/PSGC-2Q-2024-Publication-Datafile.xlsx";
 
-    const psgc = PsgcReader.instance;
+    const psgc = await psgcReader.read(filePath);
 
-    await psgc.read(filePath);
-    psgc.filter().associate();
+    const regionIds: Record<string, any> = {};
 
     for (const region of psgc.regions) {
         const reg = Region.build();
@@ -53,6 +52,10 @@ const connect = async () => {
         utils.setBaseValue<RegionDefinition>(reg, regionDefinition, region);
 
         await reg.save();
+
+        if (regionDefinition.id) {
+            regionIds[region.code] = reg[regionDefinition.id];
+        }
     }
 
     console.log(provinceDefinition);
