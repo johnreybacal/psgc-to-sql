@@ -11,6 +11,13 @@ export const defineProvince = (
     utils.addColumnIfDefined<ProvinceDefinition>(
         columns,
         definition,
+        "regionId",
+        DataTypes.INTEGER,
+        false
+    );
+    utils.addColumnIfDefined<ProvinceDefinition>(
+        columns,
+        definition,
         "incomeClassification",
         DataTypes.STRING
     );

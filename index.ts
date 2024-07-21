@@ -1,84 +1,22 @@
-import psgcReader from "psgc-reader";
-import { Sequelize } from "sequelize";
-import { ProvinceDefinition, RegionDefinition } from "./src/definitions";
-import { utils } from "./src/definitions/util";
-import { defineProvince, defineRegion } from "./src/models";
+import { Dialect } from "sequelize";
+import psgcToSql from "./src/";
 
-const connect = async () => {
-    const sequelize = new Sequelize("psgc-test", "root", "root", {
-        dialect: "mysql",
-        host: "localhost",
-        port: 3306,
-    });
-
-    try {
-        await sequelize.authenticate();
-        console.log("Connection has been established successfully.");
-    } catch (error) {
-        console.error("Unable to connect to the database:", error);
-        process.exit(1);
-    }
-
-    const regionDefinition: RegionDefinition = {
-        tableName: "region__",
-        id: "ID",
-        code: "CD",
-        name: "NM",
-        createdAt: "AUDIT_CREATED_AT",
-        updatedAt: "AUDIT_UPDATED_AT",
-    };
-    const provinceDefinition: ProvinceDefinition = {
-        tableName: "porubinsu",
-        name: "namae",
-        incomeClassification: "ingukamu",
-        population: "popureeshu",
-        oldCode: "orudu_koodu",
-    };
-
-    const Region = defineRegion(sequelize, regionDefinition);
-    const Province = defineProvince(sequelize, provinceDefinition);
-
-    console.log(Region);
-
-    const filePath = "./data/PSGC-2Q-2024-Publication-Datafile.xlsx";
-
-    const psgc = await psgcReader.read(filePath);
-
-    const regionIds: Record<string, any> = {};
-
-    for (const region of psgc.regions) {
-        const reg = Region.build();
-
-        utils.setBaseValue<RegionDefinition>(reg, regionDefinition, region);
-
-        await reg.save();
-
-        if (regionDefinition.id) {
-            regionIds[region.code] = reg[regionDefinition.id];
+const test = async () => {
+    await psgcToSql.connect(
+        process.env.DB_NAME!,
+        process.env.DB_USERNAME!,
+        process.env.DB_PASSWORD,
+        {
+            dialect: process.env.DB_ENGINE! as Dialect,
+            host: process.env.DB_HOST!,
+            port: process.env.DB_PORT! as unknown as number,
         }
-    }
+    );
 
-    console.log(provinceDefinition);
-
-    for (const province of psgc.provinces) {
-        const prov = Province.build();
-
-        utils.setBaseValue<ProvinceDefinition>(
-            prov,
-            provinceDefinition,
-            province
-        );
-        utils.setValueIfDefined<ProvinceDefinition>(
-            prov,
-            provinceDefinition,
-            "incomeClassification",
-            province.incomeClassification
-        );
-
-        await prov.save();
-    }
+    const filePath = "./data/PSGC-April-2024-Publication-Datafile.xlsx";
+    await psgcToSql.toSql(filePath, {});
 
     process.exit(0);
 };
 
-connect();
+test();

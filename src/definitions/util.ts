@@ -24,8 +24,8 @@ export const utils = {
         definition: T,
         data: Location
     ) => {
+        model[definition.code] = data.code;
         model[definition.name] = data.name;
-        utils.setValueIfDefined<T>(model, definition, "code", data.code);
         utils.setValueIfDefined<T>(model, definition, "oldCode", data.oldCode);
         utils.setValueIfDefined<T>(
             model,
