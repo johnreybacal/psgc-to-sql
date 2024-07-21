@@ -20,19 +20,18 @@ export const define = (
     }
 
     Object.assign(columns, {
+        [definition.code]: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+    });
+    Object.assign(columns, {
         [definition.name]: {
             type: DataTypes.STRING,
             allowNull: false,
         },
     });
 
-    utils.addColumnIfDefined<BaseDefinition>(
-        columns,
-        definition,
-        "code",
-        DataTypes.STRING,
-        false
-    );
     utils.addColumnIfDefined<BaseDefinition>(
         columns,
         definition,
