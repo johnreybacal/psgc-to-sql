@@ -1,8 +1,8 @@
-import { Dialect } from "sequelize";
+import { Dialect, Sequelize } from "sequelize";
 import psgcToSql from "./src/";
 
 const test = async () => {
-    await psgcToSql.connect(
+    const sequelize = new Sequelize(
         process.env.DB_NAME!,
         process.env.DB_USERNAME!,
         process.env.DB_PASSWORD,
@@ -13,8 +13,15 @@ const test = async () => {
         }
     );
 
+    try {
+        await sequelize.authenticate();
+    } catch (error) {
+        console.error("Unable to connect to the database:", error);
+        throw error;
+    }
+
     const filePath = "./data/PSGC-April-2024-Publication-Datafile.xlsx";
-    await psgcToSql.toSql(filePath, {});
+    await psgcToSql.setConnection(sequelize).define().toSql(filePath, {});
 
     process.exit(0);
 };

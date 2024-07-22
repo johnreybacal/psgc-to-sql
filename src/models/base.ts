@@ -1,4 +1,4 @@
-import { DataTypes, Sequelize } from "sequelize";
+import { DataTypes, Model, ModelStatic, Sequelize } from "sequelize";
 import { BaseDefinition } from "../definitions";
 import { utils } from "../definitions/util";
 
@@ -8,7 +8,7 @@ export const define = (
     modelName: string,
     defaultTableName: string,
     columns = {}
-) => {
+): ModelStatic<Model<any, any>> => {
     if (definition.id) {
         Object.assign(columns, {
             [definition.id]: {
