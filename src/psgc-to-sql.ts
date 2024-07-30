@@ -1,4 +1,11 @@
-import psgcReader from "psgc-reader";
+import psgcReader, {
+    Barangay,
+    City,
+    Municipality,
+    Province,
+    Region,
+    SubMunicipality,
+} from "psgc-reader";
 import { Model, ModelStatic, Options, Sequelize } from "sequelize";
 import {
     CityDefinition,
@@ -16,6 +23,13 @@ export default class PsgcToSql {
     Region: ModelStatic<Model<any, any>>;
     Province: ModelStatic<Model<any, any>>;
     City: ModelStatic<Model<any, any>>;
+
+    regions: Region[];
+    provinces: Province[];
+    cities: City[];
+    municipalities: Municipality[];
+    subMunicipalities: SubMunicipality[];
+    barangays: Barangay[];
 
     regionDefinition: RegionDefinition = {
         id: "id",
@@ -96,22 +110,47 @@ export default class PsgcToSql {
             cityDefinition = this.cityDefinition,
         }
     ) {
-        if (!regionDefinition.id) {
-            throw new Error("id is not defined in ProvinceDefinition");
-        }
-        if (!provinceDefinition.id) {
-            throw new Error("id is not defined in ProvinceDefinition");
-        }
-        if (!provinceDefinition.regionId) {
-            throw new Error("regionId is not defined in ProvinceDefinition");
-        }
+        await this.read(filePath);
 
-        const psgc = await psgcReader.read(filePath);
+        const regionIds: Record<string, any> = await this.saveRegions(
+            regionDefinition
+        );
+
+        const provinceIds: Record<string, any> = await this.saveProvinces(
+            regionIds,
+            provinceDefinition
+        );
+
+        await this.saveCities(regionIds, provinceIds, cityDefinition);
+    }
+
+    async read(filePath: string) {
+        const {
+            regions,
+            provinces,
+            cities,
+            municipalities,
+            subMunicipalities,
+            barangays,
+        } = await psgcReader.read(filePath);
+
+        this.regions = regions;
+        this.provinces = provinces;
+        this.cities = cities;
+        this.municipalities = municipalities;
+        this.subMunicipalities = subMunicipalities;
+        this.barangays = barangays;
+    }
+
+    async saveRegions(regionDefinition = this.regionDefinition) {
+        if (!regionDefinition.id) {
+            throw new Error("id is not defined in RegionDefinition");
+        }
 
         const regionIds: Record<string, any> = {};
         const regions = [];
 
-        for (const region of psgc.regions) {
+        for (const region of this.regions) {
             const reg = this.Region.build();
             utils.setBaseValue<RegionDefinition>(reg, regionDefinition, region);
             regions.push(reg.toJSON());
@@ -124,10 +163,24 @@ export default class PsgcToSql {
                 region[regionDefinition.id!];
         }
 
+        return regionIds;
+    }
+
+    async saveProvinces(
+        regionIds: Record<string, any>,
+        provinceDefinition = this.provinceDefinition
+    ) {
+        if (!provinceDefinition.id) {
+            throw new Error("id is not defined in ProvinceDefinition");
+        }
+        if (!provinceDefinition.regionId) {
+            throw new Error("regionId is not defined in ProvinceDefinition");
+        }
+
         const provinceIds: Record<string, any> = {};
         const provinces = [];
 
-        for (const province of psgc.provinces) {
+        for (const province of this.provinces) {
             const prov = this.Province.build();
 
             utils.setBaseValue<ProvinceDefinition>(
@@ -158,9 +211,17 @@ export default class PsgcToSql {
                 province[provinceDefinition.id!];
         }
 
+        return provinceIds;
+    }
+
+    async saveCities(
+        regionIds: Record<string, any>,
+        provinceIds: Record<string, any>,
+        cityDefinition = this.cityDefinition
+    ) {
         const cities = [];
 
-        for (const city of psgc.cities) {
+        for (const city of this.cities) {
             const ct = this.City.build();
 
             utils.setBaseValue<CityDefinition>(ct, cityDefinition, city);
