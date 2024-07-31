@@ -16,7 +16,7 @@ import {
 } from "./definitions";
 import { AbstractSeeder, CodeIdMapping, Seeder } from "./seeder";
 
-class BasicSeeder extends AbstractSeeder implements Seeder {
+class NormalizedSeeder extends AbstractSeeder implements Seeder {
     async saveRegions(definition: RegionDefinition, regions: Region[]) {
         if (!definition.id) {
             throw new Error("id is not defined in RegionDefinition");
