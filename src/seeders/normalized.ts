@@ -15,9 +15,9 @@ import {
     SubMunicipalityDefinition,
 } from "../definitions";
 import { AbstractSeeder } from "./abstract";
-import { CodeIdMapping, Seeder } from "./seeder";
+import { CodeIdMapping } from "./seeder";
 
-class NormalizedSeeder extends AbstractSeeder implements Seeder {
+export class NormalizedSeeder extends AbstractSeeder {
     async saveRegions(definition: RegionDefinition, regions: Region[]) {
         if (!definition.id) {
             throw new Error("id is not defined in RegionDefinition");
