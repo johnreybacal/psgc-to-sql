@@ -15,8 +15,8 @@ import {
     ProvinceDefinition,
     RegionDefinition,
     SubMunicipalityDefinition,
-} from "./definitions";
-import { utils } from "./definitions/util";
+} from "../definitions";
+import { utils } from "../definitions/util";
 
 export type CodeIdMapping = Record<string, any>;
 

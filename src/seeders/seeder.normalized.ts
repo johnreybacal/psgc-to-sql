@@ -13,7 +13,7 @@ import {
     ProvinceDefinition,
     RegionDefinition,
     SubMunicipalityDefinition,
-} from "./definitions";
+} from "../definitions";
 import { AbstractSeeder, CodeIdMapping, Seeder } from "./seeder";
 
 class NormalizedSeeder extends AbstractSeeder implements Seeder {
