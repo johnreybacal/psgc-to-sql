@@ -21,27 +21,35 @@ import { utils } from "./definitions/util";
 type CodeIdMapping = Record<string, any>;
 
 export interface Seeder {
-    saveRegions(definition: RegionDefinition);
-    saveProvinces(regionIds: CodeIdMapping, definition: ProvinceDefinition);
+    saveRegions(definition: RegionDefinition, regions: Region[]);
+    saveProvinces(
+        definition: ProvinceDefinition,
+        provinces: Province[],
+        regionIds: CodeIdMapping
+    );
     saveCities(
+        definition: CityDefinition,
+        cities: City[],
         regionIds: CodeIdMapping,
-        provinceIds: CodeIdMapping,
-        definition: CityDefinition
+        provinceIds: CodeIdMapping
     );
     saveMunicipalities(
+        definition: MunicipalityDefinition,
+        municipalities: Municipality[],
         regionIds: CodeIdMapping,
-        provinceIds: CodeIdMapping,
-        definition: MunicipalityDefinition
+        provinceIds: CodeIdMapping
     );
     saveSubMunicipalities(
-        cityIds: CodeIdMapping,
-        definition: SubMunicipalityDefinition
+        definition: SubMunicipalityDefinition,
+        subMunicipalities: SubMunicipality[],
+        cityIds: CodeIdMapping
     );
     saveBarangays(
+        definition: BarangayDefinition,
+        barangays: Barangay[],
         cityIds: CodeIdMapping,
         municipalityIds: CodeIdMapping,
-        subMunicipalityIds: CodeIdMapping,
-        definition: BarangayDefinition
+        subMunicipalityIds: CodeIdMapping
     );
 }
 
@@ -60,27 +68,28 @@ export abstract class AbstractSeeder implements Seeder {
     subMunicipalities: SubMunicipality[];
     barangays: Barangay[];
 
-    async saveRegions(definition: RegionDefinition) {
-        const regions = [];
+    async saveRegions(definition: RegionDefinition, regions: Region[]) {
+        const locations = [];
 
-        for (const region of this.regions) {
+        for (const region of regions) {
             const reg = this.Region.build();
             utils.setBaseValue<RegionDefinition>(reg, definition, region);
-            regions.push(reg.toJSON());
+            locations.push(reg.toJSON());
         }
 
-        const createdRecords = await this.Region.bulkCreate(regions);
+        const createdRecords = await this.Region.bulkCreate(locations);
 
         return this.mapIds(definition, createdRecords);
     }
 
     async saveProvinces(
-        regionIds: CodeIdMapping,
-        definition: ProvinceDefinition
+        definition: ProvinceDefinition,
+        provinces: Province[],
+        regionIds: CodeIdMapping
     ) {
-        const provinces = [];
+        const locations = [];
 
-        for (const province of this.provinces) {
+        for (const province of provinces) {
             const prov = this.Province.build();
 
             utils.setBaseValue<ProvinceDefinition>(prov, definition, province);
@@ -97,22 +106,23 @@ export abstract class AbstractSeeder implements Seeder {
                 province.incomeClassification
             );
 
-            provinces.push(prov.toJSON());
+            locations.push(prov.toJSON());
         }
 
-        const createdRecords = await this.Province.bulkCreate(provinces);
+        const createdRecords = await this.Province.bulkCreate(locations);
 
         return this.mapIds(definition, createdRecords);
     }
 
     async saveCities(
+        definition: CityDefinition,
+        cities: City[],
         regionIds: CodeIdMapping,
-        provinceIds: CodeIdMapping,
-        definition: CityDefinition
+        provinceIds: CodeIdMapping
     ) {
-        const cities = [];
+        const locations = [];
 
-        for (const city of this.cities) {
+        for (const city of cities) {
             const ct = this.City.build();
 
             utils.setBaseValue<CityDefinition>(ct, definition, city);
@@ -157,23 +167,24 @@ export abstract class AbstractSeeder implements Seeder {
                 city.incomeClassification
             );
 
-            cities.push(ct.toJSON());
+            locations.push(ct.toJSON());
         }
 
-        const createdRecords = await this.City.bulkCreate(cities);
+        const createdRecords = await this.City.bulkCreate(locations);
 
         return this.mapIds(definition, createdRecords);
     }
 
     async saveMunicipalities(
+        definition: MunicipalityDefinition,
+        municipalities: Municipality[],
         regionIds: CodeIdMapping,
-        provinceIds: CodeIdMapping,
-        definition: MunicipalityDefinition
+        provinceIds: CodeIdMapping
     ) {
         const municipalityIds: CodeIdMapping = {};
-        const municipalities = [];
+        const locations = [];
 
-        for (const municipality of this.municipalities) {
+        for (const municipality of municipalities) {
             const mn = this.Municipality.build();
 
             utils.setBaseValue<MunicipalityDefinition>(
@@ -205,23 +216,22 @@ export abstract class AbstractSeeder implements Seeder {
                 municipality.incomeClassification
             );
 
-            municipalities.push(mn.toJSON());
+            locations.push(mn.toJSON());
         }
 
-        const createdRecords = await this.Municipality.bulkCreate(
-            municipalities
-        );
+        const createdRecords = await this.Municipality.bulkCreate(locations);
 
         return this.mapIds(definition, createdRecords);
     }
 
     async saveSubMunicipalities(
-        cityIds: CodeIdMapping,
-        definition: SubMunicipalityDefinition
+        definition: SubMunicipalityDefinition,
+        subMunicipalities: SubMunicipality[],
+        cityIds: CodeIdMapping
     ) {
-        const subMunicipalities = [];
+        const locations = [];
 
-        for (const subMunicipality of this.subMunicipalities) {
+        for (const subMunicipality of subMunicipalities) {
             const sm = this.SubMunicipality.build();
 
             utils.setBaseValue<SubMunicipalityDefinition>(
@@ -236,25 +246,24 @@ export abstract class AbstractSeeder implements Seeder {
                 "cityId",
                 cityIds[subMunicipality.city.code]
             );
-            subMunicipalities.push(sm.toJSON());
+            locations.push(sm.toJSON());
         }
 
-        const createdRecords = await this.SubMunicipality.bulkCreate(
-            subMunicipalities
-        );
+        const createdRecords = await this.SubMunicipality.bulkCreate(locations);
 
         return this.mapIds(definition, createdRecords);
     }
     async saveBarangays(
+        definition: BarangayDefinition,
+        barangays: Barangay[],
         cityIds: CodeIdMapping,
         municipalityIds: CodeIdMapping,
-        subMunicipalityIds: CodeIdMapping,
-        definition: BarangayDefinition
+        subMunicipalityIds: CodeIdMapping
     ) {
-        const barangays = [];
+        const locations = [];
 
-        for (const barangay of this.barangays) {
-            const br = this.SubMunicipality.build();
+        for (const barangay of barangays) {
+            const br = this.Barangay.build();
 
             utils.setBaseValue<BarangayDefinition>(br, definition, barangay);
 
@@ -280,10 +289,10 @@ export abstract class AbstractSeeder implements Seeder {
                     cityIds[barangay.city.code]
                 );
             }
-            barangays.push(br.toJSON());
+            locations.push(br.toJSON());
         }
 
-        const createdRecords = await this.Barangay.bulkCreate(barangays);
+        const createdRecords = await this.Barangay.bulkCreate(locations);
 
         return this.mapIds(definition, createdRecords);
     }
