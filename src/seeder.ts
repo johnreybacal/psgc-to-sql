@@ -61,13 +61,6 @@ export abstract class AbstractSeeder implements Seeder {
     SubMunicipality: ModelStatic<Model<any, any>>;
     Barangay: ModelStatic<Model<any, any>>;
 
-    regions: Region[];
-    provinces: Province[];
-    cities: City[];
-    municipalities: Municipality[];
-    subMunicipalities: SubMunicipality[];
-    barangays: Barangay[];
-
     async saveRegions(definition: RegionDefinition, regions: Region[]) {
         const locations = [];
 
