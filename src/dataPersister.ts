@@ -8,28 +8,41 @@ import {
 } from "psgc-reader";
 import { Model, ModelStatic } from "sequelize";
 import {
+    BarangayDefinition,
+    BaseDefinition,
     CityDefinition,
     MunicipalityDefinition,
     ProvinceDefinition,
     RegionDefinition,
+    SubMunicipalityDefinition,
 } from "./definitions";
 import { utils } from "./definitions/util";
 
 interface DataPersister {
-    saveRegions(regionDefinition: RegionDefinition);
+    saveRegions(definition: RegionDefinition);
     saveProvinces(
         regionIds: Record<string, any>,
-        provinceDefinition: ProvinceDefinition
+        definition: ProvinceDefinition
     );
     saveCities(
         regionIds: Record<string, any>,
         provinceIds: Record<string, any>,
-        cityDefinition: CityDefinition
+        definition: CityDefinition
     );
     saveMunicipalities(
         regionIds: Record<string, any>,
         provinceIds: Record<string, any>,
-        municipalityDefinition: MunicipalityDefinition
+        definition: MunicipalityDefinition
+    );
+    saveSubMunicipalities(
+        cityIds: Record<string, any>,
+        definition: SubMunicipalityDefinition
+    );
+    saveBarangays(
+        cityIds: Record<string, any>,
+        municipalityIds: Record<string, any>,
+        subMunicipalityIds: Record<string, any>,
+        definition: BarangayDefinition
     );
 }
 
@@ -38,6 +51,7 @@ export abstract class AbstractDataPersister implements DataPersister {
     Province: ModelStatic<Model<any, any>>;
     City: ModelStatic<Model<any, any>>;
     Municipality: ModelStatic<Model<any, any>>;
+    SubMunicipality: ModelStatic<Model<any, any>>;
 
     regions: Region[];
     provinces: Province[];
@@ -46,50 +60,39 @@ export abstract class AbstractDataPersister implements DataPersister {
     subMunicipalities: SubMunicipality[];
     barangays: Barangay[];
 
-    async saveRegions(regionDefinition: RegionDefinition) {
-        const regionIds: Record<string, any> = {};
+    async saveRegions(definition: RegionDefinition) {
         const regions = [];
 
         for (const region of this.regions) {
             const reg = this.Region.build();
-            utils.setBaseValue<RegionDefinition>(reg, regionDefinition, region);
+            utils.setBaseValue<RegionDefinition>(reg, definition, region);
             regions.push(reg.toJSON());
         }
 
-        const createdRegions = await this.Region.bulkCreate(regions);
+        const createdRecords = await this.Region.bulkCreate(regions);
 
-        for (const region of createdRegions) {
-            regionIds[region[regionDefinition.code]] =
-                region[regionDefinition.id!];
-        }
-
-        return regionIds;
+        return this.mapIds(definition, createdRecords);
     }
 
     async saveProvinces(
         regionIds: Record<string, any>,
-        provinceDefinition: ProvinceDefinition
+        definition: ProvinceDefinition
     ) {
-        const provinceIds: Record<string, any> = {};
         const provinces = [];
 
         for (const province of this.provinces) {
             const prov = this.Province.build();
 
-            utils.setBaseValue<ProvinceDefinition>(
-                prov,
-                provinceDefinition,
-                province
-            );
+            utils.setBaseValue<ProvinceDefinition>(prov, definition, province);
             utils.setValueIfDefined<ProvinceDefinition>(
                 prov,
-                provinceDefinition,
+                definition,
                 "regionId",
                 regionIds[province.region.code]
             );
             utils.setValueIfDefined<ProvinceDefinition>(
                 prov,
-                provinceDefinition,
+                definition,
                 "incomeClassification",
                 province.incomeClassification
             );
@@ -97,40 +100,35 @@ export abstract class AbstractDataPersister implements DataPersister {
             provinces.push(prov.toJSON());
         }
 
-        const createdProvinces = await this.Province.bulkCreate(provinces);
+        const createdRecords = await this.Province.bulkCreate(provinces);
 
-        for (const province of createdProvinces) {
-            provinceIds[province[provinceDefinition.code]] =
-                province[provinceDefinition.id!];
-        }
-
-        return provinceIds;
+        return this.mapIds(definition, createdRecords);
     }
 
     async saveCities(
         regionIds: Record<string, any>,
         provinceIds: Record<string, any>,
-        cityDefinition: CityDefinition
+        definition: CityDefinition
     ) {
         const cities = [];
 
         for (const city of this.cities) {
             const ct = this.City.build();
 
-            utils.setBaseValue<CityDefinition>(ct, cityDefinition, city);
+            utils.setBaseValue<CityDefinition>(ct, definition, city);
 
             // HUC does not have province, HUC are directly under region
             if (city.class !== "HUC") {
                 if (city.province) {
                     utils.setValueIfDefined<CityDefinition>(
                         ct,
-                        cityDefinition,
+                        definition,
                         "provinceId",
                         provinceIds[city.province.code]
                     );
                     utils.setValueIfDefined<CityDefinition>(
                         ct,
-                        cityDefinition,
+                        definition,
                         "regionId",
                         regionIds[city.province.region.code]
                     );
@@ -139,7 +137,7 @@ export abstract class AbstractDataPersister implements DataPersister {
                 if (city.region) {
                     utils.setValueIfDefined<CityDefinition>(
                         ct,
-                        cityDefinition,
+                        definition,
                         "regionId",
                         regionIds[city.region.code]
                     );
@@ -148,13 +146,13 @@ export abstract class AbstractDataPersister implements DataPersister {
 
             utils.setValueIfDefined<CityDefinition>(
                 ct,
-                cityDefinition,
+                definition,
                 "class",
                 city.class
             );
             utils.setValueIfDefined<CityDefinition>(
                 ct,
-                cityDefinition,
+                definition,
                 "incomeClassification",
                 city.incomeClassification
             );
@@ -162,14 +160,17 @@ export abstract class AbstractDataPersister implements DataPersister {
             cities.push(ct.toJSON());
         }
 
-        await this.City.bulkCreate(cities);
+        const createdRecords = await this.City.bulkCreate(cities);
+
+        return this.mapIds(definition, createdRecords);
     }
 
     async saveMunicipalities(
         regionIds: Record<string, any>,
         provinceIds: Record<string, any>,
-        municipalityDefinition: MunicipalityDefinition
+        definition: MunicipalityDefinition
     ) {
+        const municipalityIds: Record<string, any> = {};
         const municipalities = [];
 
         for (const municipality of this.municipalities) {
@@ -177,14 +178,14 @@ export abstract class AbstractDataPersister implements DataPersister {
 
             utils.setBaseValue<MunicipalityDefinition>(
                 mn,
-                municipalityDefinition,
+                definition,
                 municipality
             );
 
             if (municipality.province) {
                 utils.setValueIfDefined<MunicipalityDefinition>(
                     mn,
-                    municipalityDefinition,
+                    definition,
                     "provinceId",
                     provinceIds[municipality.province?.code ?? ""]
                 );
@@ -192,14 +193,14 @@ export abstract class AbstractDataPersister implements DataPersister {
             if (municipality.region) {
                 utils.setValueIfDefined<MunicipalityDefinition>(
                     mn,
-                    municipalityDefinition,
+                    definition,
                     "regionId",
                     regionIds[municipality.region!.code]
                 );
             }
             utils.setValueIfDefined<MunicipalityDefinition>(
                 mn,
-                municipalityDefinition,
+                definition,
                 "incomeClassification",
                 municipality.incomeClassification
             );
@@ -207,6 +208,58 @@ export abstract class AbstractDataPersister implements DataPersister {
             municipalities.push(mn.toJSON());
         }
 
-        await this.Municipality.bulkCreate(municipalities);
+        const createdRecords = await this.Municipality.bulkCreate(
+            municipalities
+        );
+
+        return this.mapIds(definition, createdRecords);
+    }
+
+    async saveSubMunicipalities(
+        cityIds: Record<string, any>,
+        definition: SubMunicipalityDefinition
+    ) {
+        const subMunicipalities = [];
+
+        for (const subMunicipality of this.subMunicipalities) {
+            const sm = this.SubMunicipality.build();
+
+            utils.setBaseValue<SubMunicipalityDefinition>(
+                sm,
+                definition,
+                subMunicipality
+            );
+
+            utils.setValueIfDefined<SubMunicipalityDefinition>(
+                sm,
+                definition,
+                "cityId",
+                cityIds[subMunicipality.city.code]
+            );
+            subMunicipalities.push(sm.toJSON());
+        }
+
+        const createdRecords = await this.SubMunicipality.bulkCreate(
+            subMunicipalities
+        );
+
+        return this.mapIds(definition, createdRecords);
+    }
+    saveBarangays(
+        cityIds: Record<string, any>,
+        municipalityIds: Record<string, any>,
+        subMunicipalityIds: Record<string, any>,
+        barangayDefinition: BarangayDefinition
+    ) {
+        throw new Error("Method not implemented.");
+    }
+
+    mapIds(definition: BaseDefinition, createdLocations: Model<any, any>[]) {
+        const ids: Record<string, any> = {};
+        for (const location of createdLocations) {
+            ids[location[definition.code]] = location[definition.id!];
+        }
+
+        return ids;
     }
 }

@@ -9,4 +9,6 @@ export default interface SubMunicipalityDefinition extends BaseDefinition {
     population?: string;
     code: string;
     name: string;
+
+    cityId?: string;
 }
