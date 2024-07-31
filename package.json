@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "mysql2": "^3.10.3",
-    "psgc-reader": "^1.0.10",
+    "psgc-reader": "^1.0.12",
     "sequelize": "^6.37.3"
   }
 }

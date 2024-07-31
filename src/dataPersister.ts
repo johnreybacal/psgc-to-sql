@@ -9,6 +9,7 @@ import {
 import { Model, ModelStatic } from "sequelize";
 import {
     CityDefinition,
+    MunicipalityDefinition,
     ProvinceDefinition,
     RegionDefinition,
 } from "./definitions";
@@ -25,12 +26,18 @@ interface DataPersister {
         provinceIds: Record<string, any>,
         cityDefinition: CityDefinition
     );
+    saveMunicipalities(
+        regionIds: Record<string, any>,
+        provinceIds: Record<string, any>,
+        municipalityDefinition: MunicipalityDefinition
+    );
 }
 
 export abstract class AbstractDataPersister implements DataPersister {
     Region: ModelStatic<Model<any, any>>;
     Province: ModelStatic<Model<any, any>>;
     City: ModelStatic<Model<any, any>>;
+    Municipality: ModelStatic<Model<any, any>>;
 
     regions: Region[];
     provinces: Province[];
@@ -114,25 +121,29 @@ export abstract class AbstractDataPersister implements DataPersister {
 
             // HUC does not have province, HUC are directly under region
             if (city.class !== "HUC") {
-                utils.setValueIfDefined<CityDefinition>(
-                    ct,
-                    cityDefinition,
-                    "provinceId",
-                    provinceIds[city.province!.code]
-                );
-                utils.setValueIfDefined<CityDefinition>(
-                    ct,
-                    cityDefinition,
-                    "regionId",
-                    regionIds[city.province!.region.code]
-                );
+                if (city.province) {
+                    utils.setValueIfDefined<CityDefinition>(
+                        ct,
+                        cityDefinition,
+                        "provinceId",
+                        provinceIds[city.province.code]
+                    );
+                    utils.setValueIfDefined<CityDefinition>(
+                        ct,
+                        cityDefinition,
+                        "regionId",
+                        regionIds[city.province.region.code]
+                    );
+                }
             } else {
-                utils.setValueIfDefined<CityDefinition>(
-                    ct,
-                    cityDefinition,
-                    "regionId",
-                    regionIds[city.region!.code]
-                );
+                if (city.region) {
+                    utils.setValueIfDefined<CityDefinition>(
+                        ct,
+                        cityDefinition,
+                        "regionId",
+                        regionIds[city.region.code]
+                    );
+                }
             }
 
             utils.setValueIfDefined<CityDefinition>(
@@ -152,5 +163,50 @@ export abstract class AbstractDataPersister implements DataPersister {
         }
 
         await this.City.bulkCreate(cities);
+    }
+
+    async saveMunicipalities(
+        regionIds: Record<string, any>,
+        provinceIds: Record<string, any>,
+        municipalityDefinition: MunicipalityDefinition
+    ) {
+        const municipalities = [];
+
+        for (const municipality of this.municipalities) {
+            const mn = this.Municipality.build();
+
+            utils.setBaseValue<MunicipalityDefinition>(
+                mn,
+                municipalityDefinition,
+                municipality
+            );
+
+            if (municipality.province) {
+                utils.setValueIfDefined<MunicipalityDefinition>(
+                    mn,
+                    municipalityDefinition,
+                    "provinceId",
+                    provinceIds[municipality.province?.code ?? ""]
+                );
+            }
+            if (municipality.region) {
+                utils.setValueIfDefined<MunicipalityDefinition>(
+                    mn,
+                    municipalityDefinition,
+                    "regionId",
+                    regionIds[municipality.region!.code]
+                );
+            }
+            utils.setValueIfDefined<MunicipalityDefinition>(
+                mn,
+                municipalityDefinition,
+                "incomeClassification",
+                municipality.incomeClassification
+            );
+
+            municipalities.push(mn.toJSON());
+        }
+
+        await this.Municipality.bulkCreate(municipalities);
     }
 }

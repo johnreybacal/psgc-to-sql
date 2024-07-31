@@ -11,4 +11,6 @@ export default interface MunicipalityDefinition extends BaseDefinition {
     name: string;
 
     incomeClassification?: string;
+    regionId?: string;
+    provinceId?: string;
 }
