@@ -1,5 +1,5 @@
-import { AbstractDataPersister } from "./dataPersister";
 import { ProvinceDefinition, RegionDefinition } from "./definitions";
+import { AbstractDataPersister } from "./seeder";
 
 class DataPersister extends AbstractDataPersister {
     async saveRegions(regionDefinition: RegionDefinition) {
