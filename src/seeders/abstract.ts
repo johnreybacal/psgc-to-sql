@@ -17,41 +17,7 @@ import {
     SubMunicipalityDefinition,
 } from "../definitions";
 import { utils } from "../definitions/util";
-
-export type CodeIdMapping = Record<string, any>;
-
-export interface Seeder {
-    saveRegions(definition: RegionDefinition, regions: Region[]);
-    saveProvinces(
-        definition: ProvinceDefinition,
-        provinces: Province[],
-        regionIds: CodeIdMapping
-    );
-    saveCities(
-        definition: CityDefinition,
-        cities: City[],
-        regionIds: CodeIdMapping,
-        provinceIds: CodeIdMapping
-    );
-    saveMunicipalities(
-        definition: MunicipalityDefinition,
-        municipalities: Municipality[],
-        regionIds: CodeIdMapping,
-        provinceIds: CodeIdMapping
-    );
-    saveSubMunicipalities(
-        definition: SubMunicipalityDefinition,
-        subMunicipalities: SubMunicipality[],
-        cityIds: CodeIdMapping
-    );
-    saveBarangays(
-        definition: BarangayDefinition,
-        barangays: Barangay[],
-        cityIds: CodeIdMapping,
-        municipalityIds: CodeIdMapping,
-        subMunicipalityIds: CodeIdMapping
-    );
-}
+import { CodeIdMapping, Seeder } from "./seeder";
 
 export abstract class AbstractSeeder implements Seeder {
     protected sequelize: Sequelize;

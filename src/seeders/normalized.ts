@@ -14,7 +14,8 @@ import {
     RegionDefinition,
     SubMunicipalityDefinition,
 } from "../definitions";
-import { AbstractSeeder, CodeIdMapping, Seeder } from "./seeder";
+import { AbstractSeeder } from "./abstract";
+import { CodeIdMapping, Seeder } from "./seeder";
 
 class NormalizedSeeder extends AbstractSeeder implements Seeder {
     async saveRegions(definition: RegionDefinition, regions: Region[]) {
