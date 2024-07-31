@@ -18,30 +18,29 @@ import {
 } from "./definitions";
 import { utils } from "./definitions/util";
 
-interface DataPersister {
+type CodeIdMapping = Record<string, any>;
+
+export interface DataPersister {
     saveRegions(definition: RegionDefinition);
-    saveProvinces(
-        regionIds: Record<string, any>,
-        definition: ProvinceDefinition
-    );
+    saveProvinces(regionIds: CodeIdMapping, definition: ProvinceDefinition);
     saveCities(
-        regionIds: Record<string, any>,
-        provinceIds: Record<string, any>,
+        regionIds: CodeIdMapping,
+        provinceIds: CodeIdMapping,
         definition: CityDefinition
     );
     saveMunicipalities(
-        regionIds: Record<string, any>,
-        provinceIds: Record<string, any>,
+        regionIds: CodeIdMapping,
+        provinceIds: CodeIdMapping,
         definition: MunicipalityDefinition
     );
     saveSubMunicipalities(
-        cityIds: Record<string, any>,
+        cityIds: CodeIdMapping,
         definition: SubMunicipalityDefinition
     );
     saveBarangays(
-        cityIds: Record<string, any>,
-        municipalityIds: Record<string, any>,
-        subMunicipalityIds: Record<string, any>,
+        cityIds: CodeIdMapping,
+        municipalityIds: CodeIdMapping,
+        subMunicipalityIds: CodeIdMapping,
         definition: BarangayDefinition
     );
 }
@@ -52,6 +51,7 @@ export abstract class AbstractDataPersister implements DataPersister {
     City: ModelStatic<Model<any, any>>;
     Municipality: ModelStatic<Model<any, any>>;
     SubMunicipality: ModelStatic<Model<any, any>>;
+    Barangay: ModelStatic<Model<any, any>>;
 
     regions: Region[];
     provinces: Province[];
@@ -75,7 +75,7 @@ export abstract class AbstractDataPersister implements DataPersister {
     }
 
     async saveProvinces(
-        regionIds: Record<string, any>,
+        regionIds: CodeIdMapping,
         definition: ProvinceDefinition
     ) {
         const provinces = [];
@@ -106,8 +106,8 @@ export abstract class AbstractDataPersister implements DataPersister {
     }
 
     async saveCities(
-        regionIds: Record<string, any>,
-        provinceIds: Record<string, any>,
+        regionIds: CodeIdMapping,
+        provinceIds: CodeIdMapping,
         definition: CityDefinition
     ) {
         const cities = [];
@@ -166,11 +166,11 @@ export abstract class AbstractDataPersister implements DataPersister {
     }
 
     async saveMunicipalities(
-        regionIds: Record<string, any>,
-        provinceIds: Record<string, any>,
+        regionIds: CodeIdMapping,
+        provinceIds: CodeIdMapping,
         definition: MunicipalityDefinition
     ) {
-        const municipalityIds: Record<string, any> = {};
+        const municipalityIds: CodeIdMapping = {};
         const municipalities = [];
 
         for (const municipality of this.municipalities) {
@@ -216,7 +216,7 @@ export abstract class AbstractDataPersister implements DataPersister {
     }
 
     async saveSubMunicipalities(
-        cityIds: Record<string, any>,
+        cityIds: CodeIdMapping,
         definition: SubMunicipalityDefinition
     ) {
         const subMunicipalities = [];
@@ -245,17 +245,51 @@ export abstract class AbstractDataPersister implements DataPersister {
 
         return this.mapIds(definition, createdRecords);
     }
-    saveBarangays(
-        cityIds: Record<string, any>,
-        municipalityIds: Record<string, any>,
-        subMunicipalityIds: Record<string, any>,
-        barangayDefinition: BarangayDefinition
+    async saveBarangays(
+        cityIds: CodeIdMapping,
+        municipalityIds: CodeIdMapping,
+        subMunicipalityIds: CodeIdMapping,
+        definition: BarangayDefinition
     ) {
-        throw new Error("Method not implemented.");
+        const barangays = [];
+
+        for (const barangay of this.barangays) {
+            const br = this.SubMunicipality.build();
+
+            utils.setBaseValue<BarangayDefinition>(br, definition, barangay);
+
+            if (barangay.subMunicipality) {
+                utils.setValueIfDefined<BarangayDefinition>(
+                    br,
+                    definition,
+                    "subMunicipalityId",
+                    subMunicipalityIds[barangay.subMunicipality.code]
+                );
+            } else if (barangay.municipality) {
+                utils.setValueIfDefined<BarangayDefinition>(
+                    br,
+                    definition,
+                    "municipalityId",
+                    municipalityIds[barangay.municipality.code]
+                );
+            } else if (barangay.city) {
+                utils.setValueIfDefined<BarangayDefinition>(
+                    br,
+                    definition,
+                    "cityId",
+                    cityIds[barangay.city.code]
+                );
+            }
+            barangays.push(br.toJSON());
+        }
+
+        const createdRecords = await this.Barangay.bulkCreate(barangays);
+
+        return this.mapIds(definition, createdRecords);
     }
 
     mapIds(definition: BaseDefinition, createdLocations: Model<any, any>[]) {
-        const ids: Record<string, any> = {};
+        const ids: CodeIdMapping = {};
         for (const location of createdLocations) {
             ids[location[definition.code]] = location[definition.id!];
         }
