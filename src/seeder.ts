@@ -6,7 +6,7 @@ import {
     Region,
     SubMunicipality,
 } from "psgc-reader";
-import { Model, ModelStatic } from "sequelize";
+import { Model, Sequelize } from "sequelize";
 import {
     BarangayDefinition,
     BaseDefinition,
@@ -54,69 +54,71 @@ export interface Seeder {
 }
 
 export abstract class AbstractSeeder implements Seeder {
-    Region: ModelStatic<Model<any, any>>;
-    Province: ModelStatic<Model<any, any>>;
-    City: ModelStatic<Model<any, any>>;
-    Municipality: ModelStatic<Model<any, any>>;
-    SubMunicipality: ModelStatic<Model<any, any>>;
-    Barangay: ModelStatic<Model<any, any>>;
+    #sequelize: Sequelize;
 
-    async saveRegions(definition: RegionDefinition, regions: Region[]) {
+    public setConnection(sequelize: Sequelize) {
+        this.#sequelize = sequelize;
+    }
+
+    public async saveRegions(definition: RegionDefinition, regions: Region[]) {
+        const Region = this.#sequelize.model("Region");
         const locations = [];
 
         for (const region of regions) {
-            const reg = this.Region.build();
-            utils.setBaseValue<RegionDefinition>(reg, definition, region);
-            locations.push(reg.toJSON());
+            const rg = Region.build();
+            utils.setBaseValue<RegionDefinition>(rg, definition, region);
+            locations.push(rg.toJSON());
         }
 
-        const createdRecords = await this.Region.bulkCreate(locations);
+        const createdRecords = await Region.bulkCreate(locations);
 
         return this.mapIds(definition, createdRecords);
     }
 
-    async saveProvinces(
+    public async saveProvinces(
         definition: ProvinceDefinition,
         provinces: Province[],
         regionIds: CodeIdMapping
     ) {
+        const Province = this.#sequelize.model("Province");
         const locations = [];
 
         for (const province of provinces) {
-            const prov = this.Province.build();
+            const pr = Province.build();
 
-            utils.setBaseValue<ProvinceDefinition>(prov, definition, province);
+            utils.setBaseValue<ProvinceDefinition>(pr, definition, province);
             utils.setValueIfDefined<ProvinceDefinition>(
-                prov,
+                pr,
                 definition,
                 "regionId",
                 regionIds[province.region.code]
             );
             utils.setValueIfDefined<ProvinceDefinition>(
-                prov,
+                pr,
                 definition,
                 "incomeClassification",
                 province.incomeClassification
             );
 
-            locations.push(prov.toJSON());
+            locations.push(pr.toJSON());
         }
 
-        const createdRecords = await this.Province.bulkCreate(locations);
+        const createdRecords = await Province.bulkCreate(locations);
 
         return this.mapIds(definition, createdRecords);
     }
 
-    async saveCities(
+    public async saveCities(
         definition: CityDefinition,
         cities: City[],
         regionIds: CodeIdMapping,
         provinceIds: CodeIdMapping
     ) {
+        const City = this.#sequelize.model("City");
         const locations = [];
 
         for (const city of cities) {
-            const ct = this.City.build();
+            const ct = City.build();
 
             utils.setBaseValue<CityDefinition>(ct, definition, city);
 
@@ -163,22 +165,22 @@ export abstract class AbstractSeeder implements Seeder {
             locations.push(ct.toJSON());
         }
 
-        const createdRecords = await this.City.bulkCreate(locations);
+        const createdRecords = await City.bulkCreate(locations);
 
         return this.mapIds(definition, createdRecords);
     }
 
-    async saveMunicipalities(
+    public async saveMunicipalities(
         definition: MunicipalityDefinition,
         municipalities: Municipality[],
         regionIds: CodeIdMapping,
         provinceIds: CodeIdMapping
     ) {
-        const municipalityIds: CodeIdMapping = {};
+        const Municipality = this.#sequelize.model("Municipality");
         const locations = [];
 
         for (const municipality of municipalities) {
-            const mn = this.Municipality.build();
+            const mn = Municipality.build();
 
             utils.setBaseValue<MunicipalityDefinition>(
                 mn,
@@ -212,20 +214,21 @@ export abstract class AbstractSeeder implements Seeder {
             locations.push(mn.toJSON());
         }
 
-        const createdRecords = await this.Municipality.bulkCreate(locations);
+        const createdRecords = await Municipality.bulkCreate(locations);
 
         return this.mapIds(definition, createdRecords);
     }
 
-    async saveSubMunicipalities(
+    public async saveSubMunicipalities(
         definition: SubMunicipalityDefinition,
         subMunicipalities: SubMunicipality[],
         cityIds: CodeIdMapping
     ) {
+        const SubMunicipality = this.#sequelize.model("SubMunicipality");
         const locations = [];
 
         for (const subMunicipality of subMunicipalities) {
-            const sm = this.SubMunicipality.build();
+            const sm = SubMunicipality.build();
 
             utils.setBaseValue<SubMunicipalityDefinition>(
                 sm,
@@ -242,21 +245,23 @@ export abstract class AbstractSeeder implements Seeder {
             locations.push(sm.toJSON());
         }
 
-        const createdRecords = await this.SubMunicipality.bulkCreate(locations);
+        const createdRecords = await SubMunicipality.bulkCreate(locations);
 
         return this.mapIds(definition, createdRecords);
     }
-    async saveBarangays(
+
+    public async saveBarangays(
         definition: BarangayDefinition,
         barangays: Barangay[],
         cityIds: CodeIdMapping,
         municipalityIds: CodeIdMapping,
         subMunicipalityIds: CodeIdMapping
     ) {
+        const Barangay = this.#sequelize.model("Barangay");
         const locations = [];
 
         for (const barangay of barangays) {
-            const br = this.Barangay.build();
+            const br = Barangay.build();
 
             utils.setBaseValue<BarangayDefinition>(br, definition, barangay);
 
@@ -285,12 +290,15 @@ export abstract class AbstractSeeder implements Seeder {
             locations.push(br.toJSON());
         }
 
-        const createdRecords = await this.Barangay.bulkCreate(locations);
+        const createdRecords = await Barangay.bulkCreate(locations);
 
         return this.mapIds(definition, createdRecords);
     }
 
-    mapIds(definition: BaseDefinition, createdLocations: Model<any, any>[]) {
+    private mapIds(
+        definition: BaseDefinition,
+        createdLocations: Model<any, any>[]
+    ) {
         const ids: CodeIdMapping = {};
         for (const location of createdLocations) {
             ids[location[definition.code]] = location[definition.id!];
