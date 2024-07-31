@@ -18,7 +18,7 @@ import {
 } from "./definitions";
 import { utils } from "./definitions/util";
 
-type CodeIdMapping = Record<string, any>;
+export type CodeIdMapping = Record<string, any>;
 
 export interface Seeder {
     saveRegions(definition: RegionDefinition, regions: Region[]);
