@@ -20,7 +20,7 @@ import { utils } from "./definitions/util";
 
 type CodeIdMapping = Record<string, any>;
 
-export interface DataPersister {
+export interface Seeder {
     saveRegions(definition: RegionDefinition);
     saveProvinces(regionIds: CodeIdMapping, definition: ProvinceDefinition);
     saveCities(
@@ -45,7 +45,7 @@ export interface DataPersister {
     );
 }
 
-export abstract class AbstractDataPersister implements DataPersister {
+export abstract class AbstractSeeder implements Seeder {
     Region: ModelStatic<Model<any, any>>;
     Province: ModelStatic<Model<any, any>>;
     City: ModelStatic<Model<any, any>>;

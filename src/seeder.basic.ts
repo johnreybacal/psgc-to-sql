@@ -1,7 +1,7 @@
 import { ProvinceDefinition, RegionDefinition } from "./definitions";
-import { AbstractDataPersister } from "./seeder";
+import { AbstractSeeder, Seeder } from "./seeder";
 
-class DataPersister extends AbstractDataPersister {
+class BasicSeeder extends AbstractSeeder implements Seeder {
     async saveRegions(regionDefinition: RegionDefinition) {
         if (!regionDefinition.id) {
             throw new Error("id is not defined in RegionDefinition");
