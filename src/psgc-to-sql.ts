@@ -56,26 +56,18 @@ export default class PsgcToSql {
             | "force"
             | "noSync" = "createIfNotExists"
     ) {
-        this.definitions = definitions;
-
-        const Region = defineRegion(this.#sequelize, this.definitions.region);
-        const Province = defineProvince(
-            this.#sequelize,
-            this.definitions.province
-        );
-        const City = defineCity(this.#sequelize, this.definitions.city);
+        const Region = defineRegion(this.#sequelize, definitions.region);
+        const Province = defineProvince(this.#sequelize, definitions.province);
+        const City = defineCity(this.#sequelize, definitions.city);
         const Municipality = defineMunicipality(
             this.#sequelize,
-            this.definitions.municipality
+            definitions.municipality
         );
         const SubMunicipality = defineSubMunicipality(
             this.#sequelize,
-            this.definitions.subMunicipality
+            definitions.subMunicipality
         );
-        const Barangay = defineBarangay(
-            this.#sequelize,
-            this.definitions.barangay
-        );
+        const Barangay = defineBarangay(this.#sequelize, definitions.barangay);
 
         if (sync !== "noSync") {
             let syncProperties = {};
@@ -91,6 +83,88 @@ export default class PsgcToSql {
             SubMunicipality.sync(syncProperties);
             Barangay.sync(syncProperties);
         }
+
+        this.definitions = definitions;
+        return this;
+    }
+
+    public associate(sync: "alter" | "force" = "alter") {
+        const definitions = this.definitions;
+
+        const Region = this.#sequelize.model(definitions.region.modelName);
+        const Province = this.#sequelize.model(definitions.province.modelName);
+        const City = this.#sequelize.model(definitions.city.modelName);
+        const Municipality = this.#sequelize.model(
+            definitions.municipality.modelName
+        );
+        const SubMunicipality = this.#sequelize.model(
+            definitions.subMunicipality.modelName
+        );
+        const Barangay = this.#sequelize.model(definitions.barangay.modelName);
+
+        // Province
+        if (definitions.province.regionId) {
+            Region.hasMany(Province, {
+                foreignKey: definitions.province.regionId,
+            });
+        }
+        // City
+        if (definitions.city.regionId) {
+            Region.hasMany(City, {
+                foreignKey: definitions.city.regionId,
+            });
+        }
+        if (definitions.city.provinceId) {
+            Province.hasMany(City, {
+                foreignKey: definitions.city.provinceId,
+            });
+        }
+        // Municipality
+        if (definitions.municipality.regionId) {
+            Region.hasMany(Municipality, {
+                foreignKey: definitions.municipality.regionId,
+            });
+        }
+        if (definitions.municipality.provinceId) {
+            Province.hasMany(Municipality, {
+                foreignKey: definitions.municipality.provinceId,
+            });
+        }
+        // Submunicipality
+        if (definitions.subMunicipality.cityId) {
+            City.hasMany(SubMunicipality, {
+                foreignKey: definitions.subMunicipality.cityId,
+            });
+        }
+        // Barangay
+        if (definitions.barangay.cityId) {
+            City.hasMany(Barangay, {
+                foreignKey: definitions.barangay.cityId,
+            });
+        }
+        if (definitions.barangay.municipalityId) {
+            Municipality.hasMany(Barangay, {
+                foreignKey: definitions.barangay.municipalityId,
+            });
+        }
+        if (definitions.barangay.subMunicipalityId) {
+            SubMunicipality.hasMany(Barangay, {
+                foreignKey: definitions.barangay.subMunicipalityId,
+            });
+        }
+
+        let syncProperties = {};
+        if (sync === "alter") {
+            syncProperties = { alter: true };
+        } else if (sync === "force") {
+            syncProperties = { force: true };
+        }
+        Region.sync(syncProperties);
+        Province.sync(syncProperties);
+        City.sync(syncProperties);
+        Municipality.sync(syncProperties);
+        SubMunicipality.sync(syncProperties);
+        Barangay.sync(syncProperties);
 
         return this;
     }

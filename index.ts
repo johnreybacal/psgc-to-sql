@@ -26,6 +26,7 @@ const test = async () => {
     await psgcToSql
         .setSequelize(sequelize)
         .defineModels(defaults, "force")
+        .associate("force")
         .toSql(filePath);
 
     process.exit(0);

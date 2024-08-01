@@ -51,6 +51,6 @@ export const defaults: Definitions = {
         name: "name",
         cityId: "city_id",
         municipalityId: "municipality_id",
-        subMunicipalityId: "subMunicipality_id",
+        subMunicipalityId: "sub_municipality_id",
     },
 };
