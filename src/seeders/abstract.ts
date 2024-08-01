@@ -22,7 +22,7 @@ import { CodeIdMapping, Seeder } from "./seeder";
 export abstract class AbstractSeeder implements Seeder {
     protected sequelize: Sequelize;
 
-    public setConnection(sequelize: Sequelize) {
+    public setSequelize(sequelize: Sequelize) {
         this.sequelize = sequelize;
     }
 

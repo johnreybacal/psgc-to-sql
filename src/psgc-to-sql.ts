@@ -117,6 +117,8 @@ export default class PsgcToSql {
         if (!seeder) {
             seeder = new NormalizedSeeder();
         }
+        seeder.setSequelize(this.#sequelize);
+
         const psgc = await psgcReader.read(filePath);
 
         const regionIds = await seeder.saveRegions(

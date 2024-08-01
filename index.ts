@@ -21,7 +21,7 @@ const test = async () => {
     }
 
     const filePath = "./data/PSGC-April-2024-Publication-Datafile.xlsx";
-    await psgcToSql.setSequelize(sequelize).toSql(filePath);
+    await psgcToSql.setSequelize(sequelize).defineModels().toSql(filePath);
 
     process.exit(0);
 };

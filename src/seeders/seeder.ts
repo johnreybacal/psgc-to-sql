@@ -6,6 +6,7 @@ import {
     Region,
     SubMunicipality,
 } from "psgc-reader";
+import { Sequelize } from "sequelize";
 import {
     BarangayDefinition,
     CityDefinition,
@@ -18,6 +19,7 @@ import {
 export type CodeIdMapping = Record<string, any>;
 
 export interface Seeder {
+    setSequelize(sequelize: Sequelize);
     saveRegions(definition: RegionDefinition, regions: Region[]): CodeIdMapping;
     saveProvinces(
         definition: ProvinceDefinition,
