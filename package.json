@@ -1,22 +1,44 @@
 {
-  "name": "psgc-to-sql",
-  "version": "1.0.0",
-  "description": "Ingest PSGC data into SQL database",
-  "main": "index.js",
-  "scripts": {
-    "test": "jest"
-  },
-  "author": "Johnrey Bacal",
-  "license": "ISC",
-  "dependencies": {
-    "psgc-reader": "^1.0.12",
-    "sequelize": "^6.37.3"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "mysql2": "^3.11.0",
-    "sqlite3": "^5.1.7",
-    "ts-jest": "^29.2.4",
-    "ts-node": "^10.9.2"
-  }
+    "name": "psgc-to-sql",
+    "version": "1.0.0",
+    "description": "Ingest PSGC data into SQL database",
+    "main": "dist/index.js",
+    "typings": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "test": "jest"
+    },
+    "author": "Johnrey Bacal",
+    "license": "ISC",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/johnreybacal/psgc-reader.git"
+    },
+    "bugs": {
+        "url": "https://github.com/johnreybacal/psgc-reader/issues"
+    },
+    "dependencies": {
+        "psgc-reader": "^1.0.12",
+        "sequelize": "^6.37.3"
+    },
+    "devDependencies": {
+        "jest": "^29.7.0",
+        "mysql2": "^3.11.0",
+        "sqlite3": "^5.1.7",
+        "ts-jest": "^29.2.4",
+        "ts-node": "^10.9.2"
+    },
+    "keywords": [
+        "psgc",
+        "philippines",
+        "region",
+        "province",
+        "city",
+        "barangay",
+        "sql",
+        "database"
+    ]
 }
