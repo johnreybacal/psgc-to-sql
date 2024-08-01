@@ -16,11 +16,5 @@ export const defineSubMunicipality = (
         false
     );
 
-    return define(
-        sequelize,
-        definition,
-        "SubMunicipality",
-        "sub_municipalities",
-        columns
-    );
+    return define(sequelize, definition, columns);
 };

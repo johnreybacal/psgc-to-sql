@@ -6,5 +6,5 @@ export const defineRegion = (
     sequelize: Sequelize,
     definition: RegionDefinition
 ) => {
-    return define(sequelize, definition, "Region", "regions");
+    return define(sequelize, definition);
 };

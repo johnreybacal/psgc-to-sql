@@ -29,11 +29,5 @@ export const defineMunicipality = (
         DataTypes.STRING
     );
 
-    return define(
-        sequelize,
-        definition,
-        "Municipality",
-        "municipalities",
-        columns
-    );
+    return define(sequelize, definition, columns);
 };

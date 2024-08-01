@@ -22,5 +22,5 @@ export const defineProvince = (
         DataTypes.STRING
     );
 
-    return define(sequelize, definition, "Province", "provinces", columns);
+    return define(sequelize, definition, columns);
 };

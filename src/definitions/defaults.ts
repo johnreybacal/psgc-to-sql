@@ -2,17 +2,23 @@ import { Definitions } from "./definitions";
 
 export const defaults: Definitions = {
     region: {
+        tableName: "regions",
+        modelName: "Region",
         id: "id",
         code: "code",
         name: "name",
     },
     province: {
+        tableName: "provinces",
+        modelName: "Province",
         id: "id",
         code: "code",
         name: "name",
         regionId: "region_id",
     },
     city: {
+        tableName: "cities",
+        modelName: "City",
         id: "id",
         code: "code",
         name: "name",
@@ -21,6 +27,8 @@ export const defaults: Definitions = {
         provinceId: "province_id",
     },
     municipality: {
+        tableName: "municipalities",
+        modelName: "Municipality",
         id: "id",
         code: "code",
         name: "name",
@@ -28,12 +36,16 @@ export const defaults: Definitions = {
         provinceId: "province_id",
     },
     subMunicipality: {
+        tableName: "sub_municipalities",
+        modelName: "SubMunicipality",
         id: "id",
         code: "code",
         name: "name",
         cityId: "city_id",
     },
     barangay: {
+        tableName: "barangays",
+        modelName: "Barangay",
         id: "id",
         code: "code",
         name: "name",

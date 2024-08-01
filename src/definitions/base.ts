@@ -1,5 +1,6 @@
 export default interface BaseDefinition {
-    tableName?: string;
+    tableName: string;
+    modelName: string;
     id?: string;
     createdAt?: string | boolean;
     updatedAt?: string | boolean;

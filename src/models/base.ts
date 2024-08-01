@@ -5,8 +5,6 @@ import { utils } from "../definitions/util";
 export const define = (
     sequelize: Sequelize,
     definition: BaseDefinition,
-    modelName: string,
-    defaultTableName: string,
     columns = {}
 ): ModelStatic<Model<any, any>> => {
     if (definition.id) {
@@ -47,8 +45,8 @@ export const define = (
         true
     );
 
-    const model = sequelize.define(modelName, columns, {
-        tableName: definition.tableName ?? defaultTableName,
+    const model = sequelize.define(definition.modelName, columns, {
+        tableName: definition.tableName,
         createdAt: definition.createdAt ?? false,
         updatedAt: definition.updatedAt ?? false,
     });

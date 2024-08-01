@@ -33,5 +33,5 @@ export const defineCity = (
         DataTypes.STRING
     );
 
-    return define(sequelize, definition, "City", "cities", columns);
+    return define(sequelize, definition, columns);
 };

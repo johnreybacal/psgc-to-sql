@@ -11,6 +11,7 @@ const test = async () => {
             dialect: process.env.DB_ENGINE! as Dialect,
             host: process.env.DB_HOST!,
             port: process.env.DB_PORT! as unknown as number,
+            logging: false,
         }
     );
 

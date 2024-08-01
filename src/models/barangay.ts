@@ -27,5 +27,5 @@ export const defineBarangay = (
         DataTypes.INTEGER
     );
 
-    return define(sequelize, definition, "Barangay", "barangays", columns);
+    return define(sequelize, definition, columns);
 };
