@@ -12,15 +12,13 @@ export const defineCity = (
         columns,
         definition,
         "regionId",
-        DataTypes.INTEGER,
-        false
+        DataTypes.INTEGER
     );
     utils.addColumnIfDefined<CityDefinition>(
         columns,
         definition,
         "provinceId",
-        DataTypes.INTEGER,
-        false
+        DataTypes.INTEGER
     );
     utils.addColumnIfDefined<CityDefinition>(
         columns,

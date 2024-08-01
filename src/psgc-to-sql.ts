@@ -146,7 +146,7 @@ export default class PsgcToSql {
         const subMunicipalityIds = await seeder.saveSubMunicipalities(
             this.definitions.subMunicipality,
             psgc.subMunicipalities,
-            regionIds
+            cityIds
         );
         await seeder.saveBarangays(
             this.definitions.barangay,

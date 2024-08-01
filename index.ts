@@ -1,5 +1,6 @@
 import { Dialect, Sequelize } from "sequelize";
 import psgcToSql from "./src/";
+import { defaults } from "./src/definitions/defaults";
 
 const test = async () => {
     const sequelize = new Sequelize(
@@ -21,7 +22,10 @@ const test = async () => {
     }
 
     const filePath = "./data/PSGC-April-2024-Publication-Datafile.xlsx";
-    await psgcToSql.setSequelize(sequelize).defineModels().toSql(filePath);
+    await psgcToSql
+        .setSequelize(sequelize)
+        .defineModels(defaults, "force")
+        .toSql(filePath);
 
     process.exit(0);
 };

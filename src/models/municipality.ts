@@ -11,6 +11,20 @@ export const defineMunicipality = (
     utils.addColumnIfDefined<MunicipalityDefinition>(
         columns,
         definition,
+        "regionId",
+        DataTypes.INTEGER,
+        true
+    );
+    utils.addColumnIfDefined<MunicipalityDefinition>(
+        columns,
+        definition,
+        "provinceId",
+        DataTypes.INTEGER,
+        true
+    );
+    utils.addColumnIfDefined<MunicipalityDefinition>(
+        columns,
+        definition,
         "incomeClassification",
         DataTypes.STRING
     );
