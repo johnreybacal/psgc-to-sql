@@ -1,4 +1,7 @@
 import PsgcToSql from "./psgc-to-sql";
 
-export default PsgcToSql.instance;
+const psgcToSql = PsgcToSql.instance;
+
+export default psgcToSql;
 export * from "./definitions";
+export * from "./models";
