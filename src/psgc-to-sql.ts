@@ -7,15 +7,16 @@ import psgcReader, {
     SubMunicipality,
 } from "psgc-reader";
 import { Options, Sequelize } from "sequelize";
+import { defaults } from "./definitions/defaults";
+import { Definitions } from "./definitions/definitions";
 import {
-    BarangayDefinition,
-    CityDefinition,
-    MunicipalityDefinition,
-    ProvinceDefinition,
-    RegionDefinition,
-    SubMunicipalityDefinition,
-} from "./definitions";
-import { defineCity, defineProvince, defineRegion } from "./models";
+    defineBarangay,
+    defineCity,
+    defineMunicipality,
+    defineProvince,
+    defineRegion,
+    defineSubMunicipality,
+} from "./models/";
 import { NormalizedSeeder } from "./seeders/normalized";
 import { Seeder } from "./seeders/seeder";
 
@@ -24,6 +25,7 @@ export default class PsgcToSql {
 
     #sequelize: Sequelize;
     #seeder: Seeder;
+    definitions: Definitions;
 
     regions: Region[];
     provinces: Province[];
@@ -31,47 +33,6 @@ export default class PsgcToSql {
     municipalities: Municipality[];
     subMunicipalities: SubMunicipality[];
     barangays: Barangay[];
-
-    regionDefinition: RegionDefinition = {
-        id: "id",
-        code: "code",
-        name: "name",
-    };
-    provinceDefinition: ProvinceDefinition = {
-        id: "id",
-        code: "code",
-        name: "name",
-        regionId: "region_id",
-    };
-    cityDefinition: CityDefinition = {
-        id: "id",
-        code: "code",
-        name: "name",
-        class: "class",
-        regionId: "region_id",
-        provinceId: "province_id",
-    };
-    municipalityDefinition: MunicipalityDefinition = {
-        id: "id",
-        code: "code",
-        name: "name",
-        regionId: "region_id",
-        provinceId: "province_id",
-    };
-    subMunicipalityDefinition: SubMunicipalityDefinition = {
-        id: "id",
-        code: "code",
-        name: "name",
-        cityId: "city_id",
-    };
-    barangayDefinition: BarangayDefinition = {
-        id: "id",
-        code: "code",
-        name: "name",
-        cityId: "city_id",
-        municipalityId: "municipality_id",
-        subMunicipalityId: "subMunicipality_id",
-    };
 
     public static get instance(): PsgcToSql {
         if (!PsgcToSql.#instance) {
@@ -81,8 +42,55 @@ export default class PsgcToSql {
         return PsgcToSql.#instance;
     }
 
-    public setConnection(sequelize: Sequelize) {
+    public setSequelize(sequelize: Sequelize) {
         this.#sequelize = sequelize;
+
+        return this;
+    }
+
+    public defineModels(
+        definitions = defaults,
+        sync:
+            | "createIfNotExists"
+            | "alter"
+            | "force"
+            | "noSync" = "createIfNotExists"
+    ) {
+        this.definitions = definitions;
+
+        const Region = defineRegion(this.#sequelize, this.definitions.region);
+        const Province = defineProvince(
+            this.#sequelize,
+            this.definitions.province
+        );
+        const City = defineCity(this.#sequelize, this.definitions.city);
+        const Municipality = defineMunicipality(
+            this.#sequelize,
+            this.definitions.municipality
+        );
+        const SubMunicipality = defineSubMunicipality(
+            this.#sequelize,
+            this.definitions.subMunicipality
+        );
+        const Barangay = defineBarangay(
+            this.#sequelize,
+            this.definitions.barangay
+        );
+
+        if (sync !== "noSync") {
+            let syncProperties = {};
+            if (sync === "alter") {
+                syncProperties = { alter: true };
+            } else if (sync === "force") {
+                syncProperties = { force: true };
+            }
+            Region.sync(syncProperties);
+            Province.sync(syncProperties);
+            City.sync(syncProperties);
+            Municipality.sync(syncProperties);
+            SubMunicipality.sync(syncProperties);
+            Barangay.sync(syncProperties);
+        }
 
         return this;
     }
@@ -97,32 +105,14 @@ export default class PsgcToSql {
 
         try {
             await sequelize.authenticate();
-            this.setConnection(sequelize);
+            this.setSequelize(sequelize);
         } catch (error) {
             console.error("Unable to connect to the database:", error);
             throw error;
         }
     }
 
-    public define() {
-        defineRegion(this.#sequelize, this.regionDefinition);
-        defineProvince(this.#sequelize, this.provinceDefinition);
-        defineCity(this.#sequelize, this.cityDefinition);
-
-        return this;
-    }
-
-    async toSql(
-        filePath: string,
-        {
-            regionDefinition = this.regionDefinition,
-            provinceDefinition = this.provinceDefinition,
-            cityDefinition = this.cityDefinition,
-            municipalityDefinition = this.municipalityDefinition,
-            subMunicipalityDefinition = this.subMunicipalityDefinition,
-            barangayDefinition = this.barangayDefinition,
-        }
-    ) {
+    async toSql(filePath: string) {
         let seeder = this.#seeder;
         if (!seeder) {
             seeder = new NormalizedSeeder();
@@ -130,34 +120,34 @@ export default class PsgcToSql {
         const psgc = await psgcReader.read(filePath);
 
         const regionIds = await seeder.saveRegions(
-            regionDefinition,
+            this.definitions.region,
             psgc.regions
         );
 
         const provinceIds = await seeder.saveProvinces(
-            provinceDefinition,
+            this.definitions.province,
             psgc.provinces,
             regionIds
         );
         const cityIds = await seeder.saveCities(
-            cityDefinition,
+            this.definitions.city,
             psgc.cities,
             regionIds,
             provinceIds
         );
         const municipalityIds = await seeder.saveMunicipalities(
-            municipalityDefinition,
+            this.definitions.municipality,
             psgc.municipalities,
             regionIds,
             provinceIds
         );
         const subMunicipalityIds = await seeder.saveSubMunicipalities(
-            subMunicipalityDefinition,
+            this.definitions.subMunicipality,
             psgc.subMunicipalities,
             regionIds
         );
-        const barangayIds = await seeder.saveBarangays(
-            barangayDefinition,
+        await seeder.saveBarangays(
+            this.definitions.barangay,
             psgc.barangays,
             cityIds,
             municipalityIds,
