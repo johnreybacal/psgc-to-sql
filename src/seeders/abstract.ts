@@ -27,7 +27,7 @@ export abstract class AbstractSeeder implements Seeder {
     }
 
     public async saveRegions(definition: RegionDefinition, regions: Region[]) {
-        const Region = this.sequelize.model("Region");
+        const Region = this.sequelize.model(definition.modelName);
         const locations = [];
 
         for (const region of regions) {
@@ -46,7 +46,7 @@ export abstract class AbstractSeeder implements Seeder {
         provinces: Province[],
         regionIds: CodeIdMapping
     ) {
-        const Province = this.sequelize.model("Province");
+        const Province = this.sequelize.model(definition.modelName);
         const locations = [];
 
         for (const province of provinces) {
@@ -80,7 +80,7 @@ export abstract class AbstractSeeder implements Seeder {
         regionIds: CodeIdMapping,
         provinceIds: CodeIdMapping
     ) {
-        const City = this.sequelize.model("City");
+        const City = this.sequelize.model(definition.modelName);
         const locations = [];
 
         for (const city of cities) {
@@ -142,7 +142,7 @@ export abstract class AbstractSeeder implements Seeder {
         regionIds: CodeIdMapping,
         provinceIds: CodeIdMapping
     ) {
-        const Municipality = this.sequelize.model("Municipality");
+        const Municipality = this.sequelize.model(definition.modelName);
         const locations = [];
 
         for (const municipality of municipalities) {
@@ -190,7 +190,7 @@ export abstract class AbstractSeeder implements Seeder {
         subMunicipalities: SubMunicipality[],
         cityIds: CodeIdMapping
     ) {
-        const SubMunicipality = this.sequelize.model("SubMunicipality");
+        const SubMunicipality = this.sequelize.model(definition.modelName);
         const locations = [];
 
         for (const subMunicipality of subMunicipalities) {
@@ -223,7 +223,7 @@ export abstract class AbstractSeeder implements Seeder {
         municipalityIds: CodeIdMapping,
         subMunicipalityIds: CodeIdMapping
     ) {
-        const Barangay = this.sequelize.model("Barangay");
+        const Barangay = this.sequelize.model(definition.modelName);
         const locations = [];
 
         for (const barangay of barangays) {
