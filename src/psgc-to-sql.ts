@@ -6,9 +6,11 @@ import psgcReader, {
     Region,
     SubMunicipality,
 } from "psgc-reader";
-import { Options, Sequelize } from "sequelize";
+import { DataTypes, Options, Sequelize } from "sequelize";
 import { defaults } from "./definitions/defaults";
 import { Definitions } from "./definitions/definitions";
+import TypedDefinition from "./definitions/typed";
+import { utils } from "./definitions/util";
 import {
     defineBarangay,
     defineCity,
@@ -17,8 +19,8 @@ import {
     defineRegion,
     defineSubMunicipality,
 } from "./models/";
-import { NormalizedSeeder } from "./seeders/normalized";
-import { Seeder } from "./seeders/seeder";
+import { define } from "./models/base";
+import { BasicSeeder, Seeder } from "./seeders";
 
 export default class PsgcToSql {
     static #instance: PsgcToSql;
@@ -26,6 +28,7 @@ export default class PsgcToSql {
     #sequelize: Sequelize;
     #seeder: Seeder;
     definitions: Definitions;
+    typedDefinition: TypedDefinition;
 
     regions: Region[];
     provinces: Province[];
@@ -33,6 +36,8 @@ export default class PsgcToSql {
     municipalities: Municipality[];
     subMunicipalities: SubMunicipality[];
     barangays: Barangay[];
+
+    isUsingSingleTable = false;
 
     public static get instance(): PsgcToSql {
         if (!PsgcToSql.#instance) {
@@ -186,10 +191,54 @@ export default class PsgcToSql {
         }
     }
 
-    async toSql(filePath: string) {
+    public setSeeder(seeder: Seeder) {
+        this.#seeder = seeder;
+        return this;
+    }
+
+    public useSingleTable(
+        definition: TypedDefinition,
+        sync:
+            | "createIfNotExists"
+            | "alter"
+            | "force"
+            | "noSync" = "createIfNotExists"
+    ) {
+        this.isUsingSingleTable = true;
+        this.typedDefinition = definition;
+        const columns = {
+            [definition.type]: {
+                type: DataTypes.STRING,
+                allowNull: false,
+            },
+        };
+        const Model = define(this.#sequelize, definition, columns);
+
+        if (sync !== "noSync") {
+            let syncProperties = {};
+            if (sync === "alter") {
+                syncProperties = { alter: true };
+            } else if (sync === "force") {
+                syncProperties = { force: true };
+            }
+            Model.sync(syncProperties);
+        }
+
+        return this;
+    }
+
+    public async toSql(filePath: string) {
+        if (this.isUsingSingleTable) {
+            await this.toSqlSingleTable(filePath);
+        } else {
+            await this.toSqlRelational(filePath);
+        }
+    }
+
+    private async toSqlRelational(filePath: string) {
         let seeder = this.#seeder;
         if (!seeder) {
-            seeder = new NormalizedSeeder();
+            seeder = new BasicSeeder();
         }
         seeder.setSequelize(this.#sequelize);
 
@@ -229,5 +278,48 @@ export default class PsgcToSql {
             municipalityIds,
             subMunicipalityIds
         );
+    }
+
+    private async toSqlSingleTable(filePath: string) {
+        const records = await psgcReader.readRaw(filePath);
+        const definition = this.typedDefinition;
+        const Model = this.#sequelize.model(definition.modelName);
+
+        const locations = [];
+
+        for (const record of records) {
+            if (!record.geoLevel) {
+                // Is region level
+                if (record.code.endsWith("00000000")) {
+                    record.geoLevel = "Reg";
+                }
+                // Is province level
+                else if (record.code.endsWith("00000")) {
+                    record.geoLevel = "Prov";
+                }
+                // Is city level
+                else if (record.code.endsWith("000")) {
+                    record.geoLevel = "City";
+                }
+                // Is barangay level
+                else {
+                    record.geoLevel = "Bgy";
+                }
+            }
+            const location = Model.build();
+            const type =
+                definition.typeAlias[record.geoLevel] ?? record.geoLevel;
+
+            utils.setBaseValue<TypedDefinition>(location, definition, record);
+            utils.setValueIfDefined<TypedDefinition>(
+                location,
+                definition,
+                "type",
+                type
+            );
+            locations.push(location.toJSON());
+        }
+
+        await Model.bulkCreate(locations);
     }
 }

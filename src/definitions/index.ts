@@ -6,6 +6,7 @@ import MunicipalityDefinition from "./municipality";
 import ProvinceDefinition from "./province";
 import RegionDefinition from "./region";
 import SubMunicipalityDefinition from "./subMunicipality";
+import TypedDefinition from "./typed";
 
 export {
     BarangayDefinition,
@@ -16,4 +17,5 @@ export {
     ProvinceDefinition,
     RegionDefinition,
     SubMunicipalityDefinition,
+    TypedDefinition,
 };
