@@ -59,7 +59,7 @@ const singleTable = async () => {
             dialect: process.env.DB_ENGINE! as Dialect,
             host: process.env.DB_HOST!,
             port: process.env.DB_PORT! as unknown as number,
-            logging: true,
+            logging: false,
         }
     );
 
@@ -68,6 +68,6 @@ const singleTable = async () => {
     process.exit(0);
 };
 
-// test();
+test();
 
-singleTable();
+// singleTable();

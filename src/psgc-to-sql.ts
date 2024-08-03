@@ -21,6 +21,7 @@ import { define } from "./models/base";
 import {
     AbstractSequentialSeeder,
     BasicSeeder,
+    NormalizedSeeder,
     Seeder,
     SingleTableSeeder,
 } from "./seeders";
@@ -162,6 +163,7 @@ export default class PsgcToSql {
         if (this.seeder instanceof SingleTableSeeder) {
             throw Error("Cannot associate when using TypedDefinition");
         }
+        this.setSeeder(new NormalizedSeeder());
         const definitions = this.definitions;
 
         const Region = this.sequelize.model(definitions.region.modelName);
@@ -250,7 +252,6 @@ export default class PsgcToSql {
 
         seeder.setSequelize(this.sequelize);
 
-        console.log(seeder);
         if (seeder instanceof AbstractSequentialSeeder) {
             const psgc = await psgcReader.read(filePath);
 
