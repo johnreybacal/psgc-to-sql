@@ -1,6 +1,15 @@
-import { AbstractSeeder } from "./abstract";
+import { AbstractSequentialSeeder } from "./abstractSequential";
 import { BasicSeeder } from "./basic";
 import { NormalizedSeeder } from "./normalized";
 import { Seeder } from "./seeder";
+import { SequentialSeeder } from "./sequential";
+import { SingleTableSeeder } from "./singeTable";
 
-export { AbstractSeeder, BasicSeeder, NormalizedSeeder, Seeder };
+export {
+    AbstractSequentialSeeder,
+    BasicSeeder,
+    NormalizedSeeder,
+    Seeder,
+    SequentialSeeder,
+    SingleTableSeeder,
+};

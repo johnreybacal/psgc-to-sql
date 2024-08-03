@@ -7,10 +7,8 @@ import psgcReader, {
     SubMunicipality,
 } from "psgc-reader";
 import { DataTypes, Options, Sequelize } from "sequelize";
-import { defaults } from "./definitions/defaults";
 import { Definitions } from "./definitions/definitions";
 import TypedDefinition from "./definitions/typed";
-import { utils } from "./definitions/util";
 import {
     defineBarangay,
     defineCity,
@@ -18,17 +16,24 @@ import {
     defineProvince,
     defineRegion,
     defineSubMunicipality,
-} from "./models/";
+} from "./models";
 import { define } from "./models/base";
-import { BasicSeeder, Seeder } from "./seeders";
+import {
+    AbstractSequentialSeeder,
+    BasicSeeder,
+    Seeder,
+    SingleTableSeeder,
+} from "./seeders";
+
+type Sync = "createIfNotExists" | "alter" | "force" | "noSync";
 
 export default class PsgcToSql {
     static #instance: PsgcToSql;
 
-    #sequelize: Sequelize;
-    #seeder: Seeder;
-    definitions: Definitions;
-    typedDefinition: TypedDefinition;
+    private sequelize: Sequelize;
+    private seeder: Seeder;
+    private definitions: Definitions;
+    private typedDefinition: TypedDefinition;
 
     regions: Region[];
     provinces: Province[];
@@ -48,31 +53,64 @@ export default class PsgcToSql {
     }
 
     public setSequelize(sequelize: Sequelize) {
-        this.#sequelize = sequelize;
+        this.sequelize = sequelize;
 
         return this;
     }
 
-    public defineModels(
-        definitions = defaults,
-        sync:
-            | "createIfNotExists"
-            | "alter"
-            | "force"
-            | "noSync" = "createIfNotExists"
+    public setSeeder(seeder: Seeder) {
+        this.seeder = seeder;
+        return this;
+    }
+
+    public async connect(
+        database: string,
+        username: string,
+        password?: string,
+        options?: Options
     ) {
-        const Region = defineRegion(this.#sequelize, definitions.region);
-        const Province = defineProvince(this.#sequelize, definitions.province);
-        const City = defineCity(this.#sequelize, definitions.city);
+        const sequelize = new Sequelize(database, username, password, options);
+
+        try {
+            await sequelize.authenticate();
+            this.setSequelize(sequelize);
+        } catch (error) {
+            console.error("Unable to connect to the database:", error);
+            throw error;
+        }
+    }
+
+    define(definition: Definitions, sync?: Sync): PsgcToSql;
+    define(definition: TypedDefinition, sync?: Sync): PsgcToSql;
+
+    public define() {
+        const sync = arguments[1] as Sync;
+
+        if (arguments[0].instanceOf === "Definitions") {
+            const definitions = arguments[0] as Definitions;
+            return this.defineSequentialModels(definitions, sync);
+        } else {
+            const definition = arguments[0] as TypedDefinition;
+            return this.defineSingleTableModel(definition, sync);
+        }
+    }
+
+    private defineSequentialModels(
+        definitions: Definitions,
+        sync: Sync = "createIfNotExists"
+    ) {
+        const Region = defineRegion(this.sequelize, definitions.region);
+        const Province = defineProvince(this.sequelize, definitions.province);
+        const City = defineCity(this.sequelize, definitions.city);
         const Municipality = defineMunicipality(
-            this.#sequelize,
+            this.sequelize,
             definitions.municipality
         );
         const SubMunicipality = defineSubMunicipality(
-            this.#sequelize,
+            this.sequelize,
             definitions.subMunicipality
         );
-        const Barangay = defineBarangay(this.#sequelize, definitions.barangay);
+        const Barangay = defineBarangay(this.sequelize, definitions.barangay);
 
         if (sync !== "noSync") {
             let syncProperties = {};
@@ -93,19 +131,49 @@ export default class PsgcToSql {
         return this;
     }
 
+    private defineSingleTableModel(
+        definition: TypedDefinition,
+        sync: Sync = "createIfNotExists"
+    ) {
+        this.typedDefinition = definition;
+        this.setSeeder(new SingleTableSeeder());
+        const columns = {
+            [definition.type]: {
+                type: DataTypes.STRING,
+                allowNull: false,
+            },
+        };
+        const Model = define(this.sequelize, definition, columns);
+
+        if (sync !== "noSync") {
+            let syncProperties = {};
+            if (sync === "alter") {
+                syncProperties = { alter: true };
+            } else if (sync === "force") {
+                syncProperties = { force: true };
+            }
+            Model.sync(syncProperties);
+        }
+
+        return this;
+    }
+
     public associate(sync: "alter" | "force" = "alter") {
+        if (this.seeder instanceof SingleTableSeeder) {
+            throw Error("Cannot associate when using TypedDefinition");
+        }
         const definitions = this.definitions;
 
-        const Region = this.#sequelize.model(definitions.region.modelName);
-        const Province = this.#sequelize.model(definitions.province.modelName);
-        const City = this.#sequelize.model(definitions.city.modelName);
-        const Municipality = this.#sequelize.model(
+        const Region = this.sequelize.model(definitions.region.modelName);
+        const Province = this.sequelize.model(definitions.province.modelName);
+        const City = this.sequelize.model(definitions.city.modelName);
+        const Municipality = this.sequelize.model(
             definitions.municipality.modelName
         );
-        const SubMunicipality = this.#sequelize.model(
+        const SubMunicipality = this.sequelize.model(
             definitions.subMunicipality.modelName
         );
-        const Barangay = this.#sequelize.model(definitions.barangay.modelName);
+        const Barangay = this.sequelize.model(definitions.barangay.modelName);
 
         // Province
         if (definitions.province.regionId) {
@@ -174,152 +242,31 @@ export default class PsgcToSql {
         return this;
     }
 
-    public async connect(
-        database: string,
-        username: string,
-        password?: string,
-        options?: Options
-    ) {
-        const sequelize = new Sequelize(database, username, password, options);
-
-        try {
-            await sequelize.authenticate();
-            this.setSequelize(sequelize);
-        } catch (error) {
-            console.error("Unable to connect to the database:", error);
-            throw error;
-        }
-    }
-
-    public setSeeder(seeder: Seeder) {
-        this.#seeder = seeder;
-        return this;
-    }
-
-    public useSingleTable(
-        definition: TypedDefinition,
-        sync:
-            | "createIfNotExists"
-            | "alter"
-            | "force"
-            | "noSync" = "createIfNotExists"
-    ) {
-        this.isUsingSingleTable = true;
-        this.typedDefinition = definition;
-        const columns = {
-            [definition.type]: {
-                type: DataTypes.STRING,
-                allowNull: false,
-            },
-        };
-        const Model = define(this.#sequelize, definition, columns);
-
-        if (sync !== "noSync") {
-            let syncProperties = {};
-            if (sync === "alter") {
-                syncProperties = { alter: true };
-            } else if (sync === "force") {
-                syncProperties = { force: true };
-            }
-            Model.sync(syncProperties);
-        }
-
-        return this;
-    }
-
     public async toSql(filePath: string) {
-        if (this.isUsingSingleTable) {
-            await this.toSqlSingleTable(filePath);
-        } else {
-            await this.toSqlRelational(filePath);
-        }
-    }
-
-    private async toSqlRelational(filePath: string) {
-        let seeder = this.#seeder;
+        let seeder = this.seeder;
         if (!seeder) {
             seeder = new BasicSeeder();
         }
-        seeder.setSequelize(this.#sequelize);
 
-        const psgc = await psgcReader.read(filePath);
+        seeder.setSequelize(this.sequelize);
 
-        const regionIds = await seeder.saveRegions(
-            this.definitions.region,
-            psgc.regions
-        );
+        console.log(seeder);
+        if (seeder instanceof AbstractSequentialSeeder) {
+            const psgc = await psgcReader.read(filePath);
 
-        const provinceIds = await seeder.saveProvinces(
-            this.definitions.province,
-            psgc.provinces,
-            regionIds
-        );
-        const cityIds = await seeder.saveCities(
-            this.definitions.city,
-            psgc.cities,
-            regionIds,
-            provinceIds
-        );
-        const municipalityIds = await seeder.saveMunicipalities(
-            this.definitions.municipality,
-            psgc.municipalities,
-            regionIds,
-            provinceIds
-        );
-        const subMunicipalityIds = await seeder.saveSubMunicipalities(
-            this.definitions.subMunicipality,
-            psgc.subMunicipalities,
-            cityIds
-        );
-        await seeder.saveBarangays(
-            this.definitions.barangay,
-            psgc.barangays,
-            cityIds,
-            municipalityIds,
-            subMunicipalityIds
-        );
-    }
-
-    private async toSqlSingleTable(filePath: string) {
-        const records = await psgcReader.readRaw(filePath);
-        const definition = this.typedDefinition;
-        const Model = this.#sequelize.model(definition.modelName);
-
-        const locations = [];
-
-        for (const record of records) {
-            if (!record.geoLevel) {
-                // Is region level
-                if (record.code.endsWith("00000000")) {
-                    record.geoLevel = "Reg";
-                }
-                // Is province level
-                else if (record.code.endsWith("00000")) {
-                    record.geoLevel = "Prov";
-                }
-                // Is city level
-                else if (record.code.endsWith("000")) {
-                    record.geoLevel = "City";
-                }
-                // Is barangay level
-                else {
-                    record.geoLevel = "Bgy";
-                }
+            if (!this.definitions) {
+                throw Error("Models not defined");
             }
-            const location = Model.build();
-            const type =
-                definition.typeAlias[record.geoLevel] ?? record.geoLevel;
 
-            utils.setBaseValue<TypedDefinition>(location, definition, record);
-            utils.setValueIfDefined<TypedDefinition>(
-                location,
-                definition,
-                "type",
-                type
-            );
-            locations.push(location.toJSON());
+            await seeder.seed(this.definitions, psgc);
+        } else {
+            const records = await psgcReader.readRaw(filePath);
+
+            if (!this.typedDefinition) {
+                throw Error("Models not defined");
+            }
+
+            await seeder.seed(this.typedDefinition, records);
         }
-
-        await Model.bulkCreate(locations);
     }
 }

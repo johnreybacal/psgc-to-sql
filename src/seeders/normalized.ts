@@ -3,21 +3,76 @@ import {
     City,
     Municipality,
     Province,
+    PsgcReaderResult,
+    PsgcRecord,
     Region,
     SubMunicipality,
 } from "psgc-reader";
 import {
     BarangayDefinition,
     CityDefinition,
+    Definitions,
     MunicipalityDefinition,
     ProvinceDefinition,
     RegionDefinition,
     SubMunicipalityDefinition,
+    TypedDefinition,
 } from "../definitions";
-import { AbstractSeeder } from "./abstract";
-import { CodeIdMapping } from "./seeder";
+import { AbstractSequentialSeeder } from "./abstractSequential";
+import { Seeder } from "./seeder";
+import { CodeIdMapping } from "./sequential";
 
-export class NormalizedSeeder extends AbstractSeeder {
+export class NormalizedSeeder
+    extends AbstractSequentialSeeder
+    implements Seeder
+{
+    seed(definition: Definitions, data: PsgcReaderResult);
+    seed(definition: TypedDefinition, records: PsgcRecord[]);
+
+    async seed() {
+        if (arguments[0].instanceOf === "Definitions") {
+            this.definitions = arguments[0] as Definitions;
+            const psgc = arguments[1] as PsgcReaderResult;
+
+            const regionIds = await this.saveRegions(
+                this.definitions.region,
+                psgc.regions
+            );
+
+            const provinceIds = await this.saveProvinces(
+                this.definitions.province,
+                psgc.provinces,
+                regionIds
+            );
+            const cityIds = await this.saveCities(
+                this.definitions.city,
+                psgc.cities,
+                regionIds,
+                provinceIds
+            );
+            const municipalityIds = await this.saveMunicipalities(
+                this.definitions.municipality,
+                psgc.municipalities,
+                regionIds,
+                provinceIds
+            );
+            const subMunicipalityIds = await this.saveSubMunicipalities(
+                this.definitions.subMunicipality,
+                psgc.subMunicipalities,
+                cityIds
+            );
+            await this.saveBarangays(
+                this.definitions.barangay,
+                psgc.barangays,
+                cityIds,
+                municipalityIds,
+                subMunicipalityIds
+            );
+        } else {
+            throw Error("Invalid arguments");
+        }
+    }
+
     async saveRegions(definition: RegionDefinition, regions: Region[]) {
         if (!definition.id) {
             throw new Error("id is not defined in RegionDefinition");

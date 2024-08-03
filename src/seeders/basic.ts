@@ -1,3 +1,4 @@
-import { AbstractSeeder } from "./abstract";
+import { AbstractSequentialSeeder } from "./abstractSequential";
+import { Seeder } from "./seeder";
 
-export class BasicSeeder extends AbstractSeeder {}
+export class BasicSeeder extends AbstractSequentialSeeder implements Seeder {}

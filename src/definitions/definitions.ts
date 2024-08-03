@@ -6,6 +6,7 @@ import RegionDefinition from "./region";
 import SubMunicipalityDefinition from "./subMunicipality";
 
 export interface Definitions {
+    instanceOf: "Definitions";
     region: RegionDefinition;
     province: ProvinceDefinition;
     city: CityDefinition;

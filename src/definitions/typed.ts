@@ -1,6 +1,7 @@
 import BaseDefinition from "./base";
 
 export default interface TypedDefinition extends BaseDefinition {
+    instanceOf: "TypedDefinition";
     type: string;
     typeAlias?: {
         Reg?: string;

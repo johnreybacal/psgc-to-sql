@@ -25,7 +25,7 @@ const test = async () => {
     const filePath = "./data/PSGC-April-2024-Publication-Datafile.xlsx";
     await psgcToSql
         .setSequelize(sequelize)
-        .defineModels(defaults, "force")
+        .define(defaults, "force")
         .associate("force")
         .toSql(filePath);
 
@@ -47,6 +47,7 @@ const singleTable = async () => {
             SubMun: "sub municipality",
             Bgy: "barangay",
         },
+        instanceOf: "TypedDefinition",
     };
 
     const filePath = "./data/PSGC-April-2024-Publication-Datafile.xlsx";
@@ -58,11 +59,11 @@ const singleTable = async () => {
             dialect: process.env.DB_ENGINE! as Dialect,
             host: process.env.DB_HOST!,
             port: process.env.DB_PORT! as unknown as number,
-            logging: false,
+            logging: true,
         }
     );
 
-    await psgcToSql.useSingleTable(definition, "force").toSql(filePath);
+    await psgcToSql.define(definition).associate().toSql(filePath);
 
     process.exit(0);
 };

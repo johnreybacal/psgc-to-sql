@@ -21,7 +21,7 @@
         "url": "https://github.com/johnreybacal/psgc-reader/issues"
     },
     "dependencies": {
-        "psgc-reader": "^1.0.12",
+        "psgc-reader": "^1.0.13",
         "sequelize": "^6.37.3"
     },
     "devDependencies": {
