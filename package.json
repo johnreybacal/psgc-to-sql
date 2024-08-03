@@ -1,6 +1,6 @@
 {
     "name": "psgc-to-sql",
-    "version": "1.0.0",
+    "version": "0.0.0",
     "description": "Ingest PSGC data into SQL database",
     "main": "dist/index.js",
     "typings": "dist/index.d.ts",
