@@ -1,5 +1,9 @@
 # psgc-to-sql
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/johnreybacal/psgc-to-sql/node.js.yml)
+![GitHub package.json dynamic](https://img.shields.io/github/package-json/version/johnreybacal/psgc-to-sql?label=npm&link=https%3A%2F%2Fwww.npmjs.com%2Fpackage%2Fpsgc-to-sql)
+![Codecov](https://img.shields.io/codecov/c/github/johnreybacal/psgc-to-sql)
+
 A package for ingesting PSGC publication files into SQL databases
 
 It uses [psgc-reader](https://www.npmjs.com/package/psgc-reader) to read the publication file and [sequelize](https://www.npmjs.com/package/sequelize) to store it in an SQL engine of your choice
