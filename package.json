@@ -9,7 +9,7 @@
     ],
     "scripts": {
         "build": "tsc",
-        "test": "jest"
+        "test": "jest --runInBand"
     },
     "author": "Johnrey Bacal",
     "license": "ISC",

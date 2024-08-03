@@ -14,7 +14,6 @@ export class SingleTableSeeder implements Seeder {
     seed(definition: TypedDefinition, records: PsgcRecord[]);
 
     async seed() {
-        console.log(arguments[0]);
         if (arguments[0].instanceOf === "TypedDefinition") {
             const definition = arguments[0] as TypedDefinition;
             const records = arguments[1] as PsgcRecord[];
