@@ -55,7 +55,7 @@ psgcToSql.define(definition);
 psgcToSql.associate();
 ```
 
-Basic properties of a `BaseDefinition`
+Basic properties of a `BaseDefinition`:
 
 -   `tableName`: Name of the table to store this location type
 -   `modelName`: Model to register (or registered) in sequelize
@@ -85,6 +85,11 @@ const definition: TypedDefinition = {
 // Define it
 psgcToSql.define(definition);
 ```
+
+Added properties:
+
+-   `type`: Field to store Geographic Level columns (Reg, Prov, City, ...etc)
+-   `typeAlias`: Override the value of Geographic Level from the publication file
 
 ### 3. Ingest
 
